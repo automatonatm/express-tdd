@@ -1,0 +1,12 @@
+{
+  "username_null" :"Le nom d'utilisateur ne peut pas être nul",
+  "username_size" :"Le nom d'utilisateur doit être compris entre 3 et 10 xters",
+  "email_null" :"L'e-mail ne peut pas être nul",
+  "email_invalid" :"L'e-mail doit être un e-mail valide",
+  "password_null" :"Le mot de passe ne peut pas être nul",
+  "password_size" :"votre mot de passe doit avoir une longueur minimale et maximale comprise entre 8 et 15",
+  "password_pattern1" :"votre mot de passe doit comporter au moins un chiffre",
+  "password_pattern2" :"votre mot de passe doit comporter au moins un caractère spécial",
+  "email_in_use" :"Email déjà utilisé",
+  "account_success" : "Compte créé"
+}

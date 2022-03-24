@@ -6,7 +6,7 @@ const  globalValidator = (req, res, next) => {
 
     if  (!errors.isEmpty())  {
         const validationErrors = {}
-        errors.array().forEach(error => (validationErrors[error.param]  = error.msg ))
+        errors.array().forEach(error => (validationErrors[error.param]  = req.t(error.msg )))
         return res.status(400).json({
             status: false,
             validationErrors

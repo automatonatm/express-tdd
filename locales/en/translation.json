@@ -1,0 +1,12 @@
+{
+  "username_null" :"Username cannot be null",
+  "username_size" :"Username should be btw 3 to 10 xters long",
+  "email_null" :"Email cannot be null",
+  "email_invalid" :"Email must be a valid email",
+  "password_null" :"Password cannot be null",
+  "password_size" :"your password should have min and max length between 8-15",
+  "password_pattern1" :"your password should have at least one number",
+  "password_pattern2" :"your password should have at least one special character",
+  "email_in_use" :"Email already in use",
+  "account_success" : "Account Created"
+}

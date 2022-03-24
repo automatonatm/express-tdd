@@ -1,4 +1,5 @@
 const  dotenv =  require('dotenv')
+
 const globalErrorHandler = require('./utils/errorHandler');
 
 process.on('uncaughtException', err => {

@@ -1,14 +1,17 @@
 const request = require('supertest')
-const globalErrorHandler = require('../utils/errorHandler');
+
 
 const app = require('../app')
+
+jest.mock("nodemailer");
 
 
 
 const User = require('../models/User')
 
 
-const sequelize = require('../database/db')
+const sequelize = require('../config/db')
+
 
 beforeAll(() => {
     return sequelize.sync()
@@ -25,19 +28,19 @@ const validUser = {
     password: 'password#2'
 }
 
-const postUser = (user = validUser) => {
-    return request(app)
-        .post('/api/v1/users')
-        .send(user)
+const postUser = (user = validUser, options = {}) => {
+
+    const agent = request(app).post('/api/v1/users')
+
+    if(options.language) {
+        agent.set('Accept-Language', options.language)
+    }
+    return agent.send(user)
 }
 
 describe('User Registration', () => {
 
-
-
-
     it('returns 200 OK when sign up is valid', async () => {
-
         const res = await postUser()
         expect(res.status).toBe(200)
 
@@ -47,12 +50,8 @@ describe('User Registration', () => {
     it('returns success message when signup request is valid', async () => {
 
         const res = await postUser()
-
-
-
-        expect(res.body.message).toBe('Account created')
+        expect(res.body.message).toBe('Account Created')
         expect(res.body.success).toBe(true)
-
 
     })
 
@@ -165,7 +164,7 @@ describe('User Registration', () => {
         expect(res2.body.validationErrors).toMatchObject({email: 'Email cannot be null'})
 
 
-        expect(res3.body.validationErrors).toMatchObject({password: 'your password should have at least one sepcial character', username: 'Username should be btw 3 to 10 xters long'})
+        expect(res3.body.validationErrors).toMatchObject({password: 'your password should have at least one special character', username: 'Username should be btw 3 to 10 xters long'})
 
       //  expect(res.body.validationErrors.username).toBe('Username cannot be null')
 
@@ -210,18 +209,27 @@ describe('User Registration', () => {
 
    } )
 
+    const username_null = 'Username cannot be null'
+    const username_size = 'Username should be btw 3 to 10 xters long'
+    const email_null = 'Email cannot be null'
+    const email_invalid = 'Email must be a valid email'
+    const password_null = 'Password cannot be null'
+    const password_size = 'your password should have min and max length between 8-15'
+    const password_pattern1 = 'your password should have at least one number'
+    const password_pattern2 = 'your password should have at least one special character'
+    const email_in_use = 'Email already in use'
 
     it.each`
      field         | value                        | expectedMessage
-    ${'username'}  | ${null}                      | ${'Username cannot be null'}
-    ${'username'}  | ${'us'}                      | ${'Username should be btw 3 to 10 xters long'}
-    ${'username'}  |  ${'u'.repeat(33)}     |  ${'Username should be btw 3 to 10 xters long'}
-    ${'email'}     | ${null}                      | ${'Email cannot be null'}
-    ${'email'}     | ${'user@'}                   | ${'Email must be a valid email'}
-    ${'password'}  | ${null}                      | ${'Password cannot be null'}
-    ${'password'}  | ${'pass'}                    | ${'your password should have min and max length between 8-15'}
-    ${'password'}  | ${'password'}                | ${'your password should have at least one number'}
-    ${'password'}  | ${'password1'}               | ${'your password should have at least one sepcial character'}
+    ${'username'}  | ${null}                      | ${username_null}
+    ${'username'}  | ${'us'}                      | ${username_size}
+    ${'username'}  |  ${'u'.repeat(33)}     | ${username_size}
+    ${'email'}     | ${null}                      | ${email_null}
+    ${'email'}     | ${'user@'}                   | ${email_invalid}
+    ${'password'}  | ${null}                      | ${password_null}
+    ${'password'}  | ${'pass'}                    | ${password_size}
+    ${'password'}  | ${'password'}                | ${password_pattern1}
+    ${'password'}  | ${'password1'}               | ${password_pattern2}
     `('returns $expectedMessage when field is $value', async ({field, expectedMessage,  value}) => {
 
        const user = {
@@ -243,13 +251,13 @@ describe('User Registration', () => {
 
         const response = await postUser()
 
-        expect(response.body.validationErrors.email).toBe('Email already in use')
+        expect(response.body.validationErrors.email).toBe(email_in_use)
 
     })
 
 
 
-    it('return errors for both username is null and email in user', async () => {
+    it('return errors for both username is null and email is in use', async () => {
 
         await User.create(  {...validUser})
 
@@ -266,8 +274,120 @@ describe('User Registration', () => {
     })
 
 
+    it('creates user inactive mode', async () => {
+
+        await postUser()
+        const users = await User.findAll()
+        const savedUser = users[0]
+        expect(savedUser.inactive).toBe(true)
+
+    })
+
+    it('creates user inactive mode even if request body contains inactive false', async () => {
+
+        await postUser({...validUser, inactive: false})
+        const users = await User.findAll()
+        const savedUser = users[0]
+        expect(savedUser.inactive).toBeTruthy()
+
+    })
+
+
+    it('creates an activation token for user', async () => {
+
+        await postUser()
+        const users = await User.findAll()
+        const savedUser = users[0]
+        expect(savedUser.activationToken).toBeTruthy()
+
+    })
+
+    /*it('sends an account activation email with activation token', async () => {
+
+        await postUser()
+
+        const users = await User.findAll()
+        const savedUser = users[0]
+
+        const lastMail = interactsWithMail.lastMail()
+
+
+        expect(lastMail.to[0]).toContain(validUser.email)
+
+        expect(lastMail.content).toContain(savedUser.activationToken)
+
+
+    })*/
+
 
 })
+
+
+
+
+describe('Internalization', () => {
+
+
+
+
+    const username_null = 'Le nom d\'utilisateur ne peut pas être nul'
+    const username_size = 'Le nom d\'utilisateur doit être compris entre 3 et 10 xters'
+    const email_null = 'L\'e-mail ne peut pas être nul'
+    const email_invalid = 'L\'e-mail doit être un e-mail valide'
+    const password_null = 'Le mot de passe ne peut pas être nul'
+    const password_size = 'votre mot de passe doit avoir une longueur minimale et maximale comprise entre 8 et 15'
+    const password_pattern1 = 'votre mot de passe doit comporter au moins un chiffre'
+    const password_pattern2 = 'votre mot de passe doit comporter au moins un caractère spécial'
+    const email_in_use = 'Email déjà utilisé'
+    const account_success = 'Compte créé'
+
+    it.each`
+     field         | value                        | expectedMessage
+    ${'username'}  | ${null}                      | ${username_null}
+    ${'username'}  | ${'us'}                      | ${username_size}
+    ${'username'}  |  ${'u'.repeat(33)}     | ${username_size}
+    ${'email'}     | ${null}                      | ${email_null}
+    ${'email'}     | ${'user@'}                   | ${email_invalid}
+    ${'password'}  | ${null}                      | ${password_null}
+    ${'password'}  | ${'pass'}                    | ${password_size}
+    ${'password'}  | ${'password'}                | ${password_pattern1}
+    ${'password'}  | ${'password1'}               | ${password_pattern2}
+    `('returns $expectedMessage when field is $value when language is set to french', async ({field, expectedMessage,  value}) => {
+
+        const user = {
+            user: 'user1',
+            email: 'user@mail.com',
+            password: 'P4ssword'
+        }
+
+        user[field] = value
+        const response = await postUser(user,  {language: 'fr'})
+        expect(response.body.validationErrors[field]).toBe(expectedMessage)
+    })
+
+
+    it('return Email already exists when same email is used', async () => {
+
+
+        await User.create(  {...validUser})
+
+        const response = await postUser(validUser, {language: 'fr'})
+
+        expect(response.body.validationErrors.email).toBe(email_in_use)
+
+    })
+
+    it('returns success message when signup request is valid when language is set to french', async () => {
+        const res =  await postUser(validUser, {language: 'fr'})
+        expect(res.body.message).toBe(account_success)
+        expect(res.body.success).toBe(true)
+    })
+
+
+
+
+})
+
 
 
 

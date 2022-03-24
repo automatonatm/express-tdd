@@ -1,7 +1,7 @@
 
 const Sequelize = require('sequelize')
 
-const sequelize = require('../database/db')
+const sequelize = require('../config/db')
 
 const Model = Sequelize.Model
 
@@ -21,7 +21,16 @@ User.init({
     },
     password: {
         type: Sequelize.STRING
-    }
+    },
+
+    inactive: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: true
+    },
+
+    activationToken: {
+        type: Sequelize.STRING
+    },
 
 }, {
     sequelize,

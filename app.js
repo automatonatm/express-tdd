@@ -1,16 +1,34 @@
 const express = require('express')
 const  AppError = require('./utils/appError');
 const morgan =  require('morgan');
+const i18next = require('i18next')
+const Backend = require('i18next-fs-backend')
+const middleware = require('i18next-http-middleware')
 const bodyParser = require('body-parser');
 const userRouter = require('./routes/users')
-const sequelize = require('./database/db')
+const sequelize = require('./config/db')
+
+
+i18next.use(Backend).use(middleware.LanguageDetector).init({
+    fallbackLng: 'en',
+    lng: 'en',
+    ns: ['translation'],
+    defaultNS: 'translation',
+    backend: {
+        loadPath: './locales/{{lng}}/{{ns}}.json'
+    },
+    detection: {
+        lookupHeader: 'accept-language'
+    }
+})
 
 const app = express()
 
+app.use(middleware.handle(i18next))
+
 
 sequelize.sync()
-    .then()
-    .catch((e) => console.log(e) )
+
 
 
 
