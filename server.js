@@ -1,6 +1,6 @@
 const  dotenv =  require('dotenv')
 
-const globalErrorHandler = require('./utils/errorHandler');
+const globalErrorHandler = require('./src/utils/errorHandler');
 
 process.on('uncaughtException', err => {
     console.log('UNCAUGHT EXCEPTION! 💥 Shutting down...');

@@ -1,16 +1,18 @@
 const request = require('supertest')
 
-
 const app = require('../app')
 
-jest.mock("nodemailer");
+const SMTPServer = require("smtp-server").SMTPServer;
+
+//jest.mock("nodemailer");
+
+//const api  =  request(app);
 
 
+const User = require('../src/models/User')
 
-const User = require('../models/User')
 
-
-const sequelize = require('../config/db')
+const sequelize = require('../src/config/db')
 
 
 beforeAll(() => {
@@ -30,7 +32,7 @@ const validUser = {
 
 const postUser = (user = validUser, options = {}) => {
 
-    const agent = request(app).post('/api/v1/users')
+    const agent =  request(app).post('/api/v1/users')
 
     if(options.language) {
         agent.set('Accept-Language', options.language)
@@ -302,26 +304,66 @@ describe('User Registration', () => {
 
     })
 
-    /*it('sends an account activation email with activation token', async () => {
+  /* it('sends an account activation email with activation token', async () => {
+
+        let lastMail;
+
+        const server = new SMTPServer({
+            authOptional: true,
+            onData(stream, session, callBack) {
+                let mailBody
+                stream.on('data', (data) => {
+                    mailBody += data.toString()
+                })
+                stream.on('end', () => {
+                    lastMail = mailBody()
+                    callBack()
+                })
+
+            }
+
+        })
+
+        await server.listen(8585, 'localhost')
 
         await postUser()
+
+        await server.close()
 
         const users = await User.findAll()
         const savedUser = users[0]
 
-        const lastMail = interactsWithMail.lastMail()
+        expect(lastMail).toContain(validUser.email)
+
+        expect(lastMail).toContain(savedUser.activationToken)
 
 
-        expect(lastMail.to[0]).toContain(validUser.email)
+    })
 
-        expect(lastMail.content).toContain(savedUser.activationToken)
-
-
-    })*/
-
+*/
 
 })
 
+
+
+describe('Account activation', () => {
+
+    it('activates the account when token is sent', async () => {
+
+        await postUser()
+
+        let users = await User.findAll()
+
+        const token = users[0].activationToken;
+
+        await  request(app).post(`/api/v1/users/token/${token}`).send()
+
+        expect(users[0].inactive).toBe(false)
+
+
+    })
+
+})
 
 
 

@@ -1,6 +1,6 @@
 const {check} =  require('express-validator')
 
-const {findByEmail} = require('../services/UserService')
+const {findByEmail} = require('../services/users/UserService')
 
 
 const registerValidator = () => {

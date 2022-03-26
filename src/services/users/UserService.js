@@ -1,8 +1,8 @@
 const bcrypt = require('bcrypt')
-const User = require('../models/User')
-const sendEmail = require('./sendMailService')
+const User = require('../../models/User')
+const {sendActivationEmail} = require('../email/sendMailService')
 const crypto = require('crypto')
-const sequelize = require('../config/db')
+const sequelize = require('../../config/db')
 
 
 const generateToken = (length) => {
@@ -10,7 +10,6 @@ const generateToken = (length) => {
 }
 
 const save = async (req) => {
-
 
     const {username, email, password} = req.body
 
@@ -30,11 +29,7 @@ const save = async (req) => {
 
 
     try {
-       await sendEmail({
-           email,
-          subject: 'Activation Email',
-           message: `<h4>Token:  ${user.activationToken} </h4>`
-       })
+        await sendActivationEmail(email, user.activationToken)
         await transaction.commit()
     }
     catch (err) {
@@ -46,8 +41,23 @@ const save = async (req) => {
 
 }
 
+const activate = async (token) => {
+
+    const user = await User.findOne({where: {activationToken: token}})
+
+    user.inactive = false
+
+    console.log(user)
+     return   await user.save()
+
+    //console.log(savedUser)
+
+
+
+}
+
 const findByEmail = async (email) => {
     return await User.findOne({where : {email: email}})
 }
 
-module.exports = {save, findByEmail}
+module.exports = {save, findByEmail, activate}

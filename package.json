@@ -33,6 +33,7 @@
     "jest": "^27.5.1",
     "nodemailer-stub": "^1.2.2",
     "nodemon": "^2.0.15",
+    "smtp-server": "^3.10.0",
     "supertest": "^6.2.2"
   }
 }
